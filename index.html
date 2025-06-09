@@ -1,0 +1,1177 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ESCUADRON DE DRONES</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+<!-- Pantalla de Login -->
+ 
+<div id="loginScreen" class="login-container">
+  <div class="text-center mb-4">
+    <img src="https://cdn-icons-png.flaticon.com/512/1163/1163477.png" alt="Dron" class="drone-icon-login">
+    <h2><i class="fas fa-drone-alt"></i> Acceso al Sistema</h2>
+    <p class="text-muted">Ingrese sus credenciales</p>
+  </div>
+  <form id="loginForm">
+    <div class="mb-3">
+      <label for="username" class="form-label">Usuario</label>
+      <input type="text" class="form-control" id="username" required>
+    </div>
+    <div class="mb-3">
+      <label for="password" class="form-label">Contraseña</label>
+      <input type="password" class="form-control" id="password" required>
+    </div>
+    <button type="submit" class="btn btn-primary w-100 py-2">
+      <i class="fas fa-sign-in-alt me-2"></i>Ingresar
+    </button>
+  </form>
+</div>
+
+
+<!-- Contenido principal (oculto inicialmente) -->
+<div id="mainContent" class="container mt-4 mb-5 hidden">
+  <div class="row align-items-center mb-4">
+  <div class="col-md-2 col-3 text-start">
+    <img src="https://cdn-icons-png.flaticon.com/512/1163/1163477.png" alt="Dron" class="drone-icon-main">
+  </div>
+  <div class="col-md-10 col-9">
+    <h2 class="fw-bold"><i class="fas fa-drone-alt me-2"></i>ESCUADRON DE DRONES</h2>
+    <p class="text-muted">Sistema de gestión de misiones aéreas</p>
+  </div>
+ </div>
+
+
+ <button onclick="logout()" class="btn btn-outline-secondary boton-salir">
+  <i class="fas fa-sign-out-alt me-2"></i>Salir
+</button>
+
+
+  <!-- Tarjetas de Estadísticas -->
+  <div class="row mt-3 g-4">
+  <div class="col-md-4">
+    <div class="stats-card">
+      <i class="fas fa-tasks"></i>
+      <h5>Misiones Activas</h5>
+      <div class="stats-number" id="misionesActivas">0</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="stats-card">
+      <i class="fas fa-clipboard-list"></i>
+      <h5>Total de Misiones</h5>
+      <div class="stats-number" id="totalMisiones">0</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="stats-card">
+      <i class="fas fa-calendar-day"></i>
+      <h5>Misiones de Hoy</h5>
+      <div class="stats-number" id="misionesHoy">0</div>
+    </div>
+  </div>
+</div>
+
+  <!-- Reporte por piloto -->
+  <div class="mt-5">
+    <h4 class="section-title"><i class="fas fa-chart-line me-2"></i>Reporte de Vuelo por Piloto</h4>
+    <div class="row g-4" id="reportePilotosCards"></div>
+  </div>
+
+  <!-- Mapa -->
+  <div class="mt-5">
+    <h4 class="section-title"><i class="fas fa-map-marked-alt me-2"></i>Mapa de Operaciones</h4>
+    <div id="map"></div>
+    
+  </div>
+
+  <!-- Formulario (solo visible para pilotos) -->
+  <div id="formularioMision" class="mt-5">
+    <h4 class="section-title"><i class="fas fa-plus-circle me-2"></i>Nuevo Reporte de Misión</h4>
+    <form id="formMision" class="bg-light p-4 rounded">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label fw-bold">Estado</label>
+          <select class="form-select" name="estado" required>
+            <option value="">Seleccione</option>
+            <option value="En curso">En curso</option>
+            <option value="Finalizada">Finalizada</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-bold">Misión</label>
+          <select class="form-select" name="mision" id="mision" onchange="mostrarOtroMision(this)" required>
+            <option value="">Seleccione</option>
+            <option value="Patrullaje">Patrullaje</option>
+            <option value="Escuela">Escuela</option>
+            <option value="Emergencia">Emergencia</option>
+            <option value="Choque">Choque</option>
+            <option value="Libadores">Libadores</option>
+            <option value="Sospechoso">Sospechoso</option>
+            <option value="Trafico">Tráfico</option>
+            
+            <option value="Otro">Otro</option>
+          </select>
+          <input type="text" class="form-control mt-2" name="otroMision" id="otroMision" placeholder="Especifique" style="display:none;" />
+        </div>
+       <div class="col-md-4">
+          <label class="form-label fw-bold">Ubicación</label>
+          <input type="text" class="form-control" name="zona" placeholder="Ej. Zona 1" required>
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label fw-bold">Piloto</label>
+          <select class="form-select" name="piloto" required>
+            <option value="">Seleccione</option>
+            <option value="Jhulmar Márquez">Jhulmar Márquez</option>
+            <option value="Fernando Brusco">Fernando Brusco</option>
+            <option value="Julio Callan">Julio Callan</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-bold">Dron</label>
+          <select class="form-select" name="dron" required>
+            <option value="">Seleccione</option>
+            <option value="128">Dron 128</option>
+            <option value="129">Dron 129</option>
+            
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-bold">Tiempo (min)</label>
+          <input type="number" class="form-control" name="tiempo" required>
+        </div>
+        <div class="col-12 mt-3">
+          <button type="submit" class="btn btn-success px-4 py-2">
+            <i class="fas fa-save me-2"></i>Guardar Misión
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- Tabla -->
+  <div class="mt-5">
+    <h4 class="section-title"><i class="fas fa-table me-2"></i>Registro de Misiones</h4>
+    <div class="row mb-3 g-3">
+      <div class="col-md-3">
+        <input type="text" class="form-control" id="filtroMision" placeholder="Filtrar por misión" onkeyup="filtrarTabla()">
+      </div>
+      <div class="col-md-3">
+        <input type="text" class="form-control" id="filtroZona" placeholder="Filtrar por zona" onkeyup="filtrarTabla()">
+      </div>
+      <div class="col-md-3">
+        <input type="text" class="form-control" id="filtroPiloto" placeholder="Filtrar por piloto" onkeyup="filtrarTabla()">
+      </div>
+      <div class="col-md-3">
+        <input type="text" class="form-control" id="filtroDron" placeholder="Filtrar por dron" onkeyup="filtrarTabla()">
+      </div>
+      <div class="col-md-3">
+        <select class="form-select" id="filtroEstado" onchange="filtrarTabla()">
+          <option value="">Todos los estados</option>
+          <option value="En curso">En curso</option>
+          <option value="Finalizada">Finalizada</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <input type="date" class="form-control" id="filtroFecha" onchange="filtrarTabla()">
+      </div>
+    </div>
+    <div class="mb-2 d-flex justify-content-between align-items-center">
+      <div>
+        <strong>Resultados encontrados:</strong> <span class="badge bg-primary" id="contadorResultados">0</span>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-striped table-hover">
+        <thead class="table-dark">
+          <tr>
+            <th>Fecha</th>
+            <th>Estado</th>
+            <th>Misión</th>
+            <th>Zona</th>
+            <th>Piloto</th>
+            <th>Dron</th>
+            <th>Tiempo</th>
+            <th>Multimedia</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tablaMisiones"></tbody>
+      </table>
+    </div>
+  </div>
+  
+  <!-- Modal para subir multimedia -->
+  <div class="modal fade" id="multimediaModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="fas fa-cloud-upload-alt me-2"></i>Subir Multimedia</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <ul class="nav nav-tabs mb-3" id="multimediaTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active" id="video-tab" data-bs-toggle="tab" data-bs-target="#video-tab-pane" type="button" role="tab">
+                <i class="fas fa-video me-1"></i>Videos
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="foto-tab" data-bs-toggle="tab" data-bs-target="#foto-tab-pane" type="button" role="tab">
+                <i class="fas fa-camera me-1"></i>Fotos
+              </button>
+            </li>
+          </ul>
+          
+          <div class="tab-content" id="multimediaTabsContent">
+            <!-- Pestaña de Videos -->
+            <div class="tab-pane fade show active" id="video-tab-pane" role="tabpanel" tabindex="0">
+              <div id="videoProgressContainer" style="display:none;">
+                <div class="progress mb-3" style="height: 20px;">
+                  <div id="videoUploadProgress" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                </div>
+                <p id="videoUploadPercentage" class="text-center fw-bold">0%</p>
+              </div>
+              <div class="mb-3">
+                <label for="videoInput" class="form-label">Seleccionar videos:</label>
+                <input type="file" id="videoInput" class="form-control" accept="video/*" multiple>
+              </div>
+              <button onclick="uploadVideo()" class="btn btn-primary w-100 py-2">
+                <i class="fas fa-upload me-2"></i>Subir Videos
+              </button>
+            </div>
+            
+            <!-- Pestaña de Fotos -->
+            <div class="tab-pane fade" id="foto-tab-pane" role="tabpanel" tabindex="0">
+              <div id="fotoProgressContainer" style="display:none;">
+                <div class="progress mb-3" style="height: 20px;">
+                  <div id="fotoUploadProgress" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                </div>
+                <p id="fotoUploadPercentage" class="text-center fw-bold">0%</p>
+              </div>
+              <div class="mb-3">
+                <label for="fotoInput" class="form-label">Seleccionar fotos:</label>
+                <input type="file" id="fotoInput" class="form-control" accept="image/*" multiple>
+              </div>
+              <button onclick="uploadFotos()" class="btn btn-primary w-100 py-2">
+                <i class="fas fa-upload me-2"></i>Subir Fotos
+              </button>
+              <div id="fotosPreview" class="mt-3 row g-2"></div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="fas fa-times me-1"></i>Cerrar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+  import { 
+    getFirestore, 
+    collection, 
+    addDoc, 
+    getDocs, 
+    doc, 
+    deleteDoc,
+    onSnapshot,
+    query,
+    where,
+    orderBy,
+    updateDoc,
+    setDoc,
+    getDoc,
+    arrayUnion,
+    serverTimestamp,
+  } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+  import { 
+    getStorage, 
+    ref, 
+    uploadBytesResumable, 
+    getDownloadURL,
+    listAll,
+    deleteObject
+  } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-storage.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyB8DkXFecK2tNBl_pvJcvpdMUeKVgpuLjQ",
+      authDomain: "drones-548c6.firebaseapp.com",
+      projectId: "drones-548c6",
+      storageBucket: "drones-548c6.firebasestorage.app",
+      messagingSenderId: "686749828115",
+      appId: "1:686749828115:web:78f536d977a21c6c526be6",
+      measurementId: "G-LEHBY4GMZ6"
+    };
+
+  // Inicializar Firebase
+  const firebaseApp = initializeApp(firebaseConfig);
+  const db = getFirestore(firebaseApp);
+  const storage = getStorage(firebaseApp);
+
+  // Referencias a colecciones
+  const misionesRef = collection(db, "misiones");
+  const marcadoresRef = collection(db, "marcadores");
+
+  // Variables globales
+  let currentUser = null;
+  let map;
+  let markers = {};
+  let currentMissionId = null;
+  let fotosSubidas = [];
+  let videosSubidos = [];
+  const usuarioGuardado = localStorage.getItem('usuarioActual');
+if (usuarioGuardado) {
+  currentUser = JSON.parse(usuarioGuardado);
+  document.getElementById("loginScreen").classList.add("hidden");
+  document.getElementById("mainContent").classList.remove("hidden");
+
+  if (currentUser.rol === 'Olimpo') {
+    document.getElementById("formularioMision").style.display = 'none';
+  } else if (currentUser.rol === 'Avispa') {
+    document.getElementById("formularioMision").style.display = 'block';
+  } else if (currentUser.rol === 'Prueba') {
+    document.getElementById("formularioMision").style.display = 'none';
+  }
+
+  inicializarMapa();
+  cargarMisiones();
+  escucharMisionesEnTiempoReal();
+}
+
+  // Configuración de usuarios
+  const USUARIOS = {
+    'Olimpo': { password: 'Supervisor2025', rol: 'Olimpo' },
+    'Avispa': { password: 'Avispa2025', rol: 'Avispa' },
+    'Prueba': { password: 'prueba123', rol: 'Prueba' }
+  };
+
+  // Icono para marcadores
+  const redIcon = L.icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
+    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+  });
+
+  // ==================== FUNCIONES DE FIRESTORE ====================
+
+  // Cargar misiones desde Firestore
+  async function cargarMisiones() {
+    const q = query(misionesRef, orderBy("timestamp", "desc"));
+
+    const querySnapshot = await getDocs(q);
+    const tabla = document.getElementById("tablaMisiones");
+    tabla.innerHTML = "";
+    
+    for (const doc of querySnapshot.docs) {
+      const data = doc.data();
+      await agregarFilaMision(doc.id, data);
+    }
+    
+    actualizarContadores();
+    actualizarReportePilotos();
+  }
+
+  // Escuchar cambios en las misiones en tiempo real
+  function escucharMisionesEnTiempoReal() {
+    const q = query(misionesRef, orderBy("timestamp", "desc"));
+    onSnapshot(q, async (querySnapshot) => {
+      const tabla = document.getElementById("tablaMisiones");
+      tabla.innerHTML = "";
+      
+      for (const doc of querySnapshot.docs) {
+        const data = doc.data();
+        await agregarFilaMision(doc.id, data);
+      }
+      
+      actualizarContadores();
+      actualizarReportePilotos();
+    });
+  }
+
+  // Agregar una misión a Firestore
+  async function agregarMision(datos) {
+    try {
+      const docRef = await addDoc(misionesRef, datos);
+      return docRef.id;
+    } catch (e) {
+      console.error("Error al agregar misión: ", e);
+      return null;
+    }
+  }
+
+  // Actualizar una misión en Firestore
+  async function actualizarMision(id, datos) {
+    try {
+      await updateDoc(doc(db, "misiones", id), datos);
+      return true;
+    } catch (e) {
+      console.error("Error al actualizar misión: ", e);
+      return false;
+    }
+  }
+
+  // Eliminar una misión de Firestore
+  async function eliminarMision(id) {
+    try {
+      await deleteDoc(doc(db, "misiones", id));
+      return true;
+    } catch (e) {
+      console.error("Error al eliminar misión: ", e);
+      return false;
+    }
+  }
+
+  // Cargar marcadores desde Firestore
+  async function cargarMarcadores() {
+    const q = query(marcadoresRef, orderBy("fecha", "desc"));
+    const querySnapshot = await getDocs(q);
+    
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      agregarMarcadorMapa(doc.id, data);
+    });
+  }
+
+  // Escuchar cambios en marcadores en tiempo real
+  function escucharMarcadoresEnTiempoReal() {
+    const q = query(marcadoresRef, orderBy("fecha", "desc"));
+    onSnapshot(q, (querySnapshot) => {
+      // Limpiar marcadores existentes
+      Object.values(markers).forEach(marker => marker.remove());
+      markers = {};
+      
+      // Agregar nuevos marcadores
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        agregarMarcadorMapa(doc.id, data);
+      });
+    });
+  }
+
+  // Agregar un marcador a Firestore
+  async function agregarMarcador(datos) {
+    try {
+      const docRef = await addDoc(marcadoresRef, datos);
+      return docRef.id;
+    } catch (e) {
+      console.error("Error al agregar marcador: ", e);
+      return null;
+    }
+  }
+
+  // Eliminar un marcador de Firestore
+  async function eliminarMarcador(id) {
+    try {
+      await deleteDoc(doc(db, "marcadores", id));
+      return true;
+    } catch (e) {
+      console.error("Error al eliminar marcador: ", e);
+      return false;
+    }
+  }
+
+  // ==================== FUNCIONES DE STORAGE ====================
+
+  // Eliminar archivos de una misión
+  async function eliminarArchivosMision(missionId) {
+    try {
+      const missionRef = ref(storage, `misiones/${missionId}`);
+      const folders = await listAll(missionRef);
+      
+      const deletePromises = [];
+      for (const folder of folders.prefixes) {
+        const files = await listAll(folder);
+        for (const file of files.items) {
+          deletePromises.push(deleteObject(file));
+        }
+      }
+      
+      await Promise.all(deletePromises);
+      console.log(`Archivos de la misión ${missionId} eliminados`);
+      return true;
+    } catch (error) {
+      console.error("Error al eliminar archivos:", error);
+      return false;
+    }
+  }
+
+  // Mostrar modal de multimedia
+  window.showVideoModal = function(missionId) {
+    currentMissionId = missionId;
+    fotosSubidas = [];
+    videosSubidos = [];
+    
+    document.getElementById('videoProgressContainer').style.display = 'none';
+    document.getElementById('fotoProgressContainer').style.display = 'none';
+    document.getElementById('videoInput').value = '';
+    document.getElementById('fotoInput').value = '';
+    document.getElementById('fotosPreview').innerHTML = '';
+    
+    const modal = new bootstrap.Modal(document.getElementById('multimediaModal'));
+    modal.show();
+    document.getElementById('video-tab').click();
+  };
+
+  // Subir videos al Storage
+  window.uploadVideo = async function() {
+    const fileInput = document.getElementById('videoInput');
+    const files = Array.from(fileInput.files);
+    
+    if (files.length === 0) {
+      alert('Por favor selecciona al menos un video');
+      return;
+    }
+    
+    const progressContainer = document.getElementById('videoProgressContainer');
+    const progressBar = document.getElementById('videoUploadProgress');
+    const progressText = document.getElementById('videoUploadPercentage');
+    
+    progressContainer.style.display = 'block';
+    
+    let uploadedCount = 0;
+    const totalFiles = files.length;
+    const videos = [];
+    
+    for (const file of files) {
+      try {
+        const storageRef = ref(storage, `misiones/${currentMissionId}/videos/${Date.now()}_${file.name}`);
+        const uploadTask = uploadBytesResumable(storageRef, file);
+        
+        await new Promise((resolve, reject) => {
+          uploadTask.on('state_changed',
+            (snapshot) => {
+              const progress = ((uploadedCount + (snapshot.bytesTransferred / snapshot.totalBytes)) / totalFiles * 100);
+              progressBar.style.width = `${progress}%`;
+              progressText.textContent = `${Math.round(progress)}%`;
+            },
+            (error) => {
+              console.error('Error al subir video:', error);
+              reject(error);
+            },
+            async () => {
+              const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+              videos.push({
+                name: file.name,
+                url: downloadURL,
+                fecha: new Date().toISOString()
+              });
+              uploadedCount++;
+              resolve();
+            }
+          );
+        });
+      } catch (error) {
+        console.error('Error al procesar video:', error);
+        alert(`Error al subir el video ${file.name}`);
+      }
+    }
+    
+    // Actualizar Firestore con los nuevos videos
+    try {
+      const missionRef = doc(db, "misiones", currentMissionId);
+      const missionDoc = await getDoc(missionRef);
+      const existingData = missionDoc.exists() ? missionDoc.data() : { multimedia: {} };
+      const existingFotos = existingData.multimedia?.fotos || [];
+
+      await updateDoc(missionRef, {
+        multimedia: {
+          videos: arrayUnion(...videos),
+          fotos: existingFotos
+        }
+      });
+      
+      alert(`${uploadedCount} video(s) subido(s) correctamente`);
+      updateMissionMultimedia(currentMissionId);
+    } catch (error) {
+      console.error("Error al actualizar Firestore:", error);
+      alert("Error al guardar información de los videos");
+    }
+  };
+
+  // Subir fotos al Storage
+  window.uploadFotos = async function() {
+    const fileInput = document.getElementById('fotoInput');
+    const files = Array.from(fileInput.files);
+    
+    if (files.length === 0) {
+      alert('Por favor selecciona al menos una foto');
+      return;
+    }
+    
+    const progressContainer = document.getElementById('fotoProgressContainer');
+    const progressBar = document.getElementById('fotoUploadProgress');
+    const progressText = document.getElementById('fotoUploadPercentage');
+    const fotosPreview = document.getElementById('fotosPreview');
+    
+    progressContainer.style.display = 'block';
+    fotosPreview.innerHTML = '';
+    
+    let uploadedCount = 0;
+    const totalFiles = files.length;
+    const fotos = [];
+    
+    for (const file of files) {
+      try {
+        const storageRef = ref(storage, `misiones/${currentMissionId}/fotos/${Date.now()}_${file.name}`);
+        const uploadTask = uploadBytesResumable(storageRef, file);
+        
+        await new Promise((resolve, reject) => {
+          uploadTask.on('state_changed',
+            (snapshot) => {
+              const progress = ((uploadedCount + (snapshot.bytesTransferred / snapshot.totalBytes)) / totalFiles * 100);
+              progressBar.style.width = `${progress}%`;
+              progressText.textContent = `${Math.round(progress)}%`;
+            },
+            (error) => {
+              console.error('Error al subir foto:', error);
+              reject(error);
+            },
+            async () => {
+              const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+              fotos.push({
+                name: file.name,
+                url: downloadURL,
+                fecha: new Date().toISOString()
+              });
+              
+              const col = document.createElement('div');
+              col.className = 'col-6 col-md-4';
+              col.innerHTML = `
+                <div class="ratio ratio-1x1">
+                  <img src="${downloadURL}" class="img-thumbnail object-fit-cover" alt="Foto subida">
+                </div>
+              `;
+              fotosPreview.appendChild(col);
+              
+              uploadedCount++;
+              resolve();
+            }
+          );
+        });
+      } catch (error) {
+        console.error('Error al procesar foto:', error);
+        alert(`Error al subir la foto ${file.name}`);
+      }
+    }
+    
+    // Actualizar Firestore con las nuevas fotos
+    try {
+      const missionRef = doc(db, "misiones", currentMissionId);
+      const missionDoc = await getDoc(missionRef);
+      const existingData = missionDoc.exists() ? missionDoc.data() : { multimedia: {} };
+      const existingVideos = existingData.multimedia?.videos || [];
+
+      await updateDoc(missionRef, {
+        multimedia: {
+          videos: existingVideos,
+          fotos: arrayUnion(...fotos)
+        }
+      });
+      
+      alert(`${uploadedCount} foto(s) subida(s) correctamente`);
+      updateMissionMultimedia(currentMissionId);
+    } catch (error) {
+      console.error("Error al actualizar Firestore:", error);
+      alert("Error al guardar información de las fotos");
+    }
+  };
+
+  // Actualizar multimedia en la tabla
+  function updateMissionMultimedia(missionId) {
+    const rows = document.querySelectorAll('#tablaMisiones tr');
+    rows.forEach(async row => {
+      if (row.getAttribute('data-id') === missionId) {
+        const videoCell = row.querySelector('.video-cell');
+        
+        try {
+          // Obtener datos actualizados de Firestore
+          const missionRef = doc(db, "misiones", missionId);
+          const missionDoc = await getDoc(missionRef);
+          let multimediaContent = '';
+          
+          if (missionDoc.exists()) {
+            const data = missionDoc.data();
+            
+            // Mostrar videos si existen
+            if (data.multimedia?.videos) {
+              data.multimedia.videos.forEach((video, index) => {
+                multimediaContent += `
+                  <a href="${video.url}" target="_blank" class="btn btn-sm btn-success me-1 mb-1">
+                    <i class="fas fa-play me-1"></i>Video ${index+1}
+                  </a>
+                `;
+              });
+            }
+            
+            // Mostrar fotos si existen
+            if (data.multimedia?.fotos) {
+              data.multimedia.fotos.forEach((foto, index) => {
+                multimediaContent += `
+                  <a href="${foto.url}" target="_blank" class="btn btn-sm btn-info me-1 mb-1">
+                    <i class="fas fa-image me-1"></i>Foto ${index+1}
+                  </a>
+                `;
+              });
+            }
+          }
+          
+          // Agregar botón de subir solo para pilotos
+          if (currentUser?.rol === 'Avispa') {
+            multimediaContent += `
+              <button onclick="showVideoModal('${missionId}')" class="btn btn-sm btn-primary me-1 mb-1">
+                <i class="fas fa-plus me-1"></i>Agregar
+              </button>
+            `;
+          }
+          
+          videoCell.innerHTML = `
+            <div class="d-flex flex-wrap">
+              ${multimediaContent}
+            </div>
+          `;
+        } catch (error) {
+          console.error("Error al actualizar multimedia:", error);
+        }
+      }
+    });
+  }
+
+  // ==================== FUNCIONES DEL MAPA ====================
+
+  // Inicializar mapa
+  function inicializarMapa() {
+    map = L.map('map').setView([-12.0464, -77.0428], 13);
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    // Cargar marcadores existentes
+    cargarMarcadores();
+    escucharMarcadoresEnTiempoReal();
+
+    // Permitir agregar marcadores solo a pilotos
+    if (currentUser?.rol === 'Avispa') {
+      map.on('dblclick', function(e) {
+        mostrarFormularioMarcador(e.latlng);
+      });
+    }
+  }
+
+  // Mostrar formulario para agregar marcador
+  function mostrarFormularioMarcador(latlng) {
+    const popupContent = document.createElement('div');
+    popupContent.innerHTML = `
+      <form id="popupForm">
+        <div class="mb-2">
+          <label class="form-label">Piloto:</label>
+          <input type="text" name="nombre" required class="form-control form-control-sm">
+        </div>
+        <div class="mb-2">
+          <label class="form-label">N° de Dron:</label>
+          <select name="dron" class="form-select form-select-sm" required>
+            <option value="">Seleccione</option>
+            <option value="128">Dron128</option>
+            <option value="129">Dron129</option>
+          </select>
+        </div>
+        
+        <button type="submit" class="btn btn-sm btn-primary w-100">
+          <i class="fas fa-map-marker-alt me-1"></i>Guardar Marcador
+        </button>
+      </form>
+    `;
+    
+    const popup = L.popup()
+      .setLatLng(latlng)
+      .setContent(popupContent)
+      .openOn(map);
+    
+    popupContent.querySelector("form").addEventListener("submit", async function(ev) {
+      ev.preventDefault();
+      const nombre = this.nombre.value;
+      const dron = this.dron.value;
+      
+      const marcadorData = {
+        nombre,
+        dron,
+        lat: latlng.lat,
+        lng: latlng.lng,
+        fecha: new Date().toISOString(),
+        estado: "Activo"
+      };
+      
+      const markerId = await agregarMarcador(marcadorData);
+      if (markerId) {
+        map.closePopup();
+      }
+    });
+  }
+
+  // Agregar marcador al mapa
+  function agregarMarcadorMapa(id, data) {
+    const fechaHora = new Date(data.fecha);
+    const fecha = fechaHora.toLocaleDateString();
+    const hora = fechaHora.toLocaleTimeString();
+
+    const content = `
+      <div style="min-width: 250px">
+        <h6 class="fw-bold">${data.nombre}</h6>
+        <p class="mb-1"><strong>Dron:</strong> ${data.dron}</p>
+        <p class="mb-1"><strong>Fecha:</strong> ${fecha}</p>
+        <p class="mb-1"><strong>Hora:</strong> ${hora}</p>
+        <div class="mt-2">
+          <button onclick="eliminarMarcadorDesdeMapa('${id}')" class="btn btn-sm btn-danger">
+            <i class="fas fa-trash me-1"></i>Eliminar
+          </button>
+        </div>
+      </div>
+    `;
+    
+    const marker = L.marker([data.lat, data.lng], { icon: redIcon }).addTo(map);
+    marker.bindPopup(content).openPopup();
+    
+    // Guardar referencia al marcador
+    markers[id] = marker;
+  }
+
+  // Eliminar marcador desde el mapa
+  window.eliminarMarcadorDesdeMapa = async function(markerId) {
+    if (confirm("¿Estás seguro de eliminar este marcador?")) {
+      await eliminarMarcador(markerId);
+    }
+  };
+
+  // ==================== FUNCIONES DE LA APLICACIÓN ====================
+
+  // Mostrar/ocultar campo "Otro" en tipo de misión
+  window.mostrarOtroMision = function(select) {
+    const input = document.getElementById("otroMision");
+    input.style.display = select.value === "Otro" ? "block" : "none";
+    input.required = select.value === "Otro";
+  }
+
+  // Filtrar tabla de misiones
+  window.filtrarTabla = function() {
+    const misionFiltro = document.getElementById("filtroMision").value.toLowerCase();
+    const zonaFiltro = document.getElementById("filtroZona").value.toLowerCase();
+    const pilotoFiltro = document.getElementById("filtroPiloto").value.toLowerCase();
+    const dronFiltro = document.getElementById("filtroDron").value.toLowerCase();
+    const estadoFiltro = document.getElementById("filtroEstado").value.toLowerCase();
+    const fechaFiltro = document.getElementById("filtroFecha").value;
+
+    const filas = document.querySelectorAll("#tablaMisiones tr");
+    let contador = 0;
+
+    filas.forEach(fila => {
+      if (fila.getAttribute('data-id')) { // Solo filas de datos
+        const celdas = fila.querySelectorAll("td");
+        const mision = celdas[2]?.textContent.toLowerCase();
+        const zona = celdas[3]?.textContent.toLowerCase();
+        const piloto = celdas[4]?.textContent.toLowerCase();
+        const dron = celdas[5]?.textContent.toLowerCase();
+        const estado = celdas[1]?.querySelector("select")?.value.toLowerCase() || celdas[1]?.textContent.toLowerCase();
+        const fechaCelda = celdas[0]?.textContent.trim();
+        
+        // Convertir fecha de la tabla a formato YYYY-MM-DD para comparar
+        const fechaParts = fechaCelda.split('/');
+        const fechaTabla = fechaParts.length === 3 
+            ? `${fechaParts[2]}-${fechaParts[1].padStart(2, '0')}-${fechaParts[0].padStart(2, '0')}` 
+            : fechaCelda;
+
+        const coincide =
+            (!misionFiltro || mision.includes(misionFiltro)) &&
+            (!zonaFiltro || zona.includes(zonaFiltro)) &&
+            (!pilotoFiltro || piloto.includes(pilotoFiltro)) &&
+            (!dronFiltro || dron.includes(dronFiltro)) &&
+            (!estadoFiltro || estado.includes(estadoFiltro)) &&
+            (!fechaFiltro || fechaTabla === fechaFiltro);
+
+        fila.style.display = coincide ? "" : "none";
+        if (coincide) contador++;
+      }
+    });
+
+    document.getElementById("contadorResultados").textContent = contador;
+    actualizarContadores();
+    actualizarReportePilotos();
+  }
+
+  // Actualizar contadores de misiones
+ function actualizarContadores() {
+  const filas = document.querySelectorAll("#tablaMisiones tr");
+  const total = filas.length;
+  let activas = 0;
+  let hoy = 0;
+  const fechaHoy = new Date().toISOString().split('T')[0]; // yyyy-mm-dd
+
+  filas.forEach(fila => {
+    if (fila.style.display !== "none" && fila.getAttribute('data-id')) {
+      const celdas = fila.querySelectorAll("td");
+      const estadoSelect = celdas[1]?.querySelector("select");
+      const estado = estadoSelect ? estadoSelect.value.trim() : celdas[1].textContent.trim();
+      const fecha = celdas[0]?.textContent.trim();
+
+      // 🛠 Conversión de fecha al formato ISO para comparar
+      const [dia, mes, anio] = fecha.split('/');
+      const fechaFormateada = `${anio}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+
+      if (estado === "En curso") activas++;
+      if (fechaFormateada === fechaHoy) hoy++;
+    }
+  });
+
+  document.getElementById("totalMisiones").textContent = total;
+  document.getElementById("misionesActivas").textContent = activas;
+  document.getElementById("misionesHoy").textContent = hoy;
+}
+
+
+  // Generar reporte de pilotos
+  function actualizarReportePilotos() {
+    const filas = document.querySelectorAll("#tablaMisiones tr");
+    const resumen = {};
+    filas.forEach(fila => {
+      if (fila.style.display !== "none" && fila.getAttribute('data-id')) {
+        const celdas = fila.querySelectorAll("td");
+        const piloto = celdas[4]?.textContent.trim();
+        const tiempo = parseInt(celdas[6]?.textContent.replace(" min", "").trim()) || 0;
+        if (!resumen[piloto]) resumen[piloto] = { vuelos: 0, minutos: 0 };
+        resumen[piloto].vuelos++;
+        resumen[piloto].minutos += tiempo;
+      }
+    });
+
+    const cont = document.getElementById("reportePilotosCards");
+    cont.innerHTML = "";
+    Object.entries(resumen).forEach(([piloto, data]) => {
+      const horas = Math.floor(data.minutos / 60);
+      const minutos = data.minutos % 60;
+      const card = document.createElement("div");
+      card.className = "col-md-4 col-sm-6";
+      card.innerHTML = `
+        <div class="card shadow-sm h-100">
+          <div class="card-body">
+            <h5 class="card-title"><i class="fas fa-user-astronaut me-2"></i>${piloto}</h5>
+            <p class="card-text"><i class="fas fa-plane-departure me-2"></i><strong>${data.vuelos}</strong> vuelos</p>
+            <p class="card-text"><i class="fas fa-clock me-2"></i><strong>${horas} h ${minutos} min</strong> de vuelo</p>
+          </div>
+        </div>
+      `;
+      cont.appendChild(card);
+    });
+  }
+
+  // Agregar fila de misión a la tabla
+  async function agregarFilaMision(id, data) {
+    const fila = document.createElement("tr");
+    fila.setAttribute('data-id', id);
+    
+    let multimediaContent = '';
+    
+    // Verificar si hay multimedia en los datos de Firestore
+    if (data.multimedia) {
+        // Mostrar videos si existen
+        if (data.multimedia.videos && data.multimedia.videos.length > 0) {
+            data.multimedia.videos.forEach((video, index) => {
+                multimediaContent += `
+                    <a href="${video.url}" target="_blank" class="btn btn-sm btn-success me-1 mb-1">
+                        <i class="fas fa-play me-1"></i>Video ${index+1}
+                    </a>
+                `;
+            });
+        }
+        
+        // Mostrar fotos si existen
+        if (data.multimedia.fotos && data.multimedia.fotos.length > 0) {
+            data.multimedia.fotos.forEach((foto, index) => {
+                multimediaContent += `
+                    <a href="${foto.url}" target="_blank" class="btn btn-sm btn-info me-1 mb-1">
+                        <i class="fas fa-image me-1"></i>Foto ${index+1}
+                    </a>
+                `;
+            });
+        }
+    }
+    
+    // Agregar botón de subir solo para pilotos
+    if (currentUser?.rol === 'piloto') {
+        multimediaContent += `
+            <button onclick="showVideoModal('${id}')" class="btn btn-sm btn-primary me-1 mb-1">
+                <i class="fas fa-plus me-1"></i>Agregar
+            </button>
+        `;
+    }
+    
+    fila.innerHTML = `
+        <td>${data.fecha}</td>
+        <td>
+            <select class="form-select form-select-sm" onchange="actualizarEstadoMision('${id}', this.value)">
+                <option value="En curso" ${data.estado === "En curso" ? "selected" : ""}>En curso</option>
+                <option value="Finalizada" ${data.estado === "Finalizada" ? "selected" : ""}>Finalizada</option>
+            </select>
+        </td>
+        <td>${data.mision}</td>
+        <td> ${data.zona}</td>
+        <td>${data.piloto}</td>
+        <td> ${data.dron}</td>
+        <td>${data.tiempo} min</td>
+        <td class="video-cell">
+            <div class="d-flex flex-wrap">
+                ${multimediaContent}
+            </div>
+        </td>
+        <td>
+            <button onclick="eliminarMisionCompleta('${id}', this)" class="btn btn-sm btn-danger">
+                <i class="fas fa-trash me-1"></i>Eliminar
+            </button>
+        </td>
+    `;
+    
+    // Configurar permisos según rol
+    if (currentUser?.rol === 'Olimpo') {
+        fila.querySelector('select').disabled = true;
+        fila.querySelector('td:last-child button').disabled = true;
+    } else if (currentUser?.rol === 'Prueba') {
+        fila.querySelector('td:last-child button').disabled = true;
+    }
+    
+    document.getElementById("tablaMisiones").appendChild(fila);
+  }
+
+  // Actualizar estado de una misión
+  window.actualizarEstadoMision = async function(missionId, nuevoEstado) {
+    try {
+      await updateDoc(doc(db, "misiones", missionId), {
+        estado: nuevoEstado
+      });
+      actualizarContadores();
+      actualizarReportePilotos();
+    } catch (error) {
+      console.error("Error al actualizar estado:", error);
+      alert("Error al actualizar el estado de la misión");
+    }
+  };
+
+  // Eliminar misión completamente (datos + archivos)
+  window.eliminarMisionCompleta = async function(missionId, button) {
+    if (confirm("¿Estás seguro de eliminar esta misión y todos sus archivos multimedia?")) {
+      try {
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Eliminando...';
+        button.disabled = true;
+        
+        // Eliminar archivos primero
+        await eliminarArchivosMision(missionId);
+        
+        // Luego eliminar el documento de Firestore
+        await eliminarMision(missionId);
+      } catch (error) {
+        console.error("Error al eliminar la misión:", error);
+        alert("Ocurrió un error al eliminar la misión");
+      }
+    }
+  };
+
+  // ==================== MANEJADORES DE EVENTOS ====================
+
+  
+  // Manejar formulario de misiones
+  document.getElementById("formMision").addEventListener("submit", async function(e) {
+    e.preventDefault();
+    const form = e.target;
+    const datos = new FormData(form);
+    const hoy = new Date();
+    const dia = String(hoy.getDate()).padStart(2, '0');
+    const mes = String(hoy.getMonth() + 1).padStart(2, '0');
+    const anio = hoy.getFullYear();
+    const fechaFormateada = `${dia}/${mes}/${anio}`;
+
+    const misionData = {
+      fecha: fechaFormateada,
+      timestamp: serverTimestamp(), // para ordenar
+      estado: datos.get("estado"),
+      mision: datos.get("mision") === "Otro" ? datos.get("otroMision") : datos.get("mision"),
+      zona: datos.get("zona"),
+      piloto: datos.get("piloto"),
+      dron: datos.get("dron"),
+      tiempo: datos.get("tiempo"),
+      usuario: currentUser.username
+    };
+    
+    const missionId = await agregarMision(misionData);
+    if (missionId) {
+      form.reset();
+      document.getElementById("otroMision").style.display = "none";
+    }
+  });
+
+  // Manejar login
+  document.getElementById("loginForm").addEventListener("submit", function(e) {
+    e.preventDefault();
+    const username = document.getElementById("username").value.trim();
+    const password = document.getElementById("password").value.trim();
+    
+    if (USUARIOS[username] && USUARIOS[username].password === password) {
+      currentUser = { username, rol: USUARIOS[username].rol };
+        localStorage.setItem('usuarioActual', JSON.stringify(currentUser));
+
+      
+      // Ocultar login y mostrar contenido principal
+      document.getElementById("loginScreen").classList.add("hidden");
+      document.getElementById("mainContent").classList.remove("hidden");
+      
+      // Configurar permisos según el rol
+      if (currentUser.rol === 'Olimpo') {
+        document.getElementById("formularioMision").style.display = 'none';
+      } else if (currentUser.rol === 'Avispa') {
+        document.getElementById("formularioMision").style.display = 'block';
+      } else if (currentUser.rol === 'Prueba') {
+        document.getElementById("formularioMision").style.display = 'none';
+      }
+      
+      // Inicializar el mapa y cargar datos
+      inicializarMapa();
+      cargarMisiones();
+      escucharMisionesEnTiempoReal();
+    } else {
+      alert("Usuario o contraseña incorrectos");
+    }
+  });
+
+  // Función para cerrar sesión
+  window.logout = function() {
+    currentUser = null;
+    document.getElementById("mainContent").classList.add("hidden");
+    document.getElementById("loginScreen").classList.remove("hidden");
+    document.getElementById("username").value = "";
+    document.getElementById("password").value = "";
+    localStorage.removeItem('usuarioActual');
+
+    
+    // Limpiar mapa
+    if (map) {
+      map.off();
+      map.remove();
+    }
+    markers = {};
+  };
+</script>
+</body>
+</html>
