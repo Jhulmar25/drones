@@ -63,21 +63,22 @@
       <div class="stats-number" id="misionesActivas">0</div>
     </div>
   </div>
-  <div class="col-md-4">
-    <div class="stats-card">
-      <i class="fas fa-clipboard-list"></i>
-      <h5>Total de Misiones</h5>
-      <div class="stats-number" id="totalMisiones">0</div>
-    </div>
-  </div>
+
   <div class="col-md-4">
     <div class="stats-card">
       <i class="fas fa-calendar-day"></i>
       <h5>Misiones de Hoy</h5>
       <div class="stats-number" id="misionesHoy">0</div>
     </div>
-  </div>
-</div>
+    </div>
+      <div class="col-md-4">
+      <div class="stats-card">
+        <i class="fas fa-clipboard-list"></i>
+        <h5>Total de Misiones</h5>
+        <div class="stats-number" id="totalMisiones">0</div>
+      </div>
+    </div>
+ </div>
 
   <!-- Reporte por piloto -->
   <div class="mt-5">
@@ -307,14 +308,13 @@
   } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-storage.js";
 
     const firebaseConfig = {
-      apiKey: "AIzaSyB8DkXFecK2tNBl_pvJcvpdMUeKVgpuLjQ",
-      authDomain: "drones-548c6.firebaseapp.com",
-      projectId: "drones-548c6",
-      storageBucket: "drones-548c6.firebasestorage.app",
-      messagingSenderId: "686749828115",
-      appId: "1:686749828115:web:78f536d977a21c6c526be6",
-      measurementId: "G-LEHBY4GMZ6"
-    };
+    apiKey: "AIzaSyCL0iEeRzFT0ZmaZ4MYYK_q9N9bkXUxxsM",
+    authDomain: "sistema-drones.firebaseapp.com",
+    projectId: "sistema-drones",
+    storageBucket: "sistema-drones.firebasestorage.app",
+    messagingSenderId: "1030572582149",
+    appId: "1:1030572582149:web:65cf258d6d02a85c3a036c"
+  };
 
   // Inicializar Firebase
   const firebaseApp = initializeApp(firebaseConfig);
