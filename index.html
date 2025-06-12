@@ -677,12 +677,12 @@ if (usuarioGuardado) {
       const existingData = missionDoc.exists() ? missionDoc.data() : { multimedia: {} };
       const existingVideos = existingData.multimedia?.videos || [];
 
+      for (const foto of fotos) {
       await updateDoc(missionRef, {
-        multimedia: {
-          videos: existingVideos,
-          fotos: arrayUnion(...fotos)
-        }
+        'multimedia.fotos': arrayUnion(foto)
       });
+    }
+
       
       alert(`${uploadedCount} foto(s) subida(s) correctamente`);
       updateMissionMultimedia(currentMissionId);
@@ -789,8 +789,7 @@ if (usuarioGuardado) {
             <option value="">Seleccione</option>
             <option value="128">Dron 128</option>
             <option value="129">Dron 129</option>
-            <option value="128y129">Dron 128 y 129</option>
-            
+            <option value="128 y 129">Dron 128 y 129</option>
           </select>
         </div>
         
