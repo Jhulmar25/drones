@@ -38,20 +38,19 @@
 
 <!-- Contenido principal (oculto inicialmente) -->
 <div id="mainContent" class="container mt-4 mb-5 hidden">
-  <div class="row align-items-center mb-4">
-  <div class="col-md-2 col-3 text-start">
+  <!-- Encabezado Responsive del Main -->
+<div class="d-flex flex-column flex-md-row align-items-center justify-content-between mb-4">
+  <div class="d-flex flex-column flex-md-row align-items-center text-center text-md-start gap-3">
     <img src="https://cdn-icons-png.flaticon.com/512/1163/1163477.png" alt="Dron" class="drone-icon-main">
+    <div>
+      <h2><i class="fas fa-drone-alt me-2"></i>ESCUADRON DE DRONES</h2>
+      <p class="text-muted">Sistema de gestión de misiones aéreas</p>
+    </div>
   </div>
-  <div class="col-md-10 col-9">
-    <h2 class="fw-bold"><i class="fas fa-drone-alt me-2"></i>ESCUADRON DE DRONES</h2>
-    <p class="text-muted">Sistema de gestión de misiones aéreas</p>
-  </div>
- </div>
-
-
- <button onclick="logout()" class="btn btn-outline-secondary boton-salir">
-  <i class="fas fa-sign-out-alt me-2"></i>Salir
-</button>
+  <button onclick="logout()" class="btn boton-salir mt-3 mt-md-0">
+    <i class="fas fa-sign-out-alt me-2"></i>Salir
+  </button>
+</div>
 
 
   <!-- Tarjetas de Estadísticas -->
@@ -913,6 +912,19 @@ if (usuarioGuardado) {
     actualizarContadores();
     actualizarReportePilotos();
   }
+  function obtenerFechaUTC5() {
+  const ahoraUTC = new Date();
+  const offsetUTC5 = -5 * 60; // minutos
+  const utc5Time = new Date(ahoraUTC.getTime() + offsetUTC5 * 60000);
+
+  const año = utc5Time.getFullYear();
+  const mes = String(utc5Time.getMonth() + 1).padStart(2, '0');
+  const dia = String(utc5Time.getDate()).padStart(2, '0');
+
+  return `${año}-${mes}-${dia}`; // formato yyyy-mm-dd
+  }
+
+  
 
   // Actualizar contadores de misiones
  function actualizarContadores() {
@@ -920,7 +932,7 @@ if (usuarioGuardado) {
   const total = filas.length;
   let activas = 0;
   let hoy = 0;
-  const fechaHoy = new Date().toISOString().split('T')[0]; // yyyy-mm-dd
+  const fechaHoy = obtenerFechaUTC5(); // yyyy-mm-dd
 
   filas.forEach(fila => {
     if (fila.style.display !== "none" && fila.getAttribute('data-id')) {
