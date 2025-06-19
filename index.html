@@ -942,11 +942,10 @@ if (usuarioGuardado) {
       const fecha = celdas[0]?.textContent.trim();
 
       // 🛠 Conversión de fecha al formato ISO para comparar
-      const [dia, mes, anio] = fecha.split('/');
-      const fechaFormateada = `${anio}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+      const fechaTexto = celdas[0]?.textContent.trim().split('\n')[0]; // "19/06/2025"
 
       if (estado === "En curso") activas++;
-      if (fechaFormateada === fechaHoy) hoy++;
+      if (fechaTexto === fechaHoy.split('-').reverse().join('/')) hoy++;
     }
   });
 
@@ -1033,7 +1032,20 @@ if (usuarioGuardado) {
     }
     
     fila.innerHTML = `
-        <td>${data.fecha}</td>
+        <td>
+          ${data.fecha}
+          <br>
+          <small class="text-muted" style="font-size: 0.90rem;">
+            ${
+              data.hora 
+              || (data.timestamp?.toDate 
+                  ? data.timestamp.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
+                  : '')
+            }
+          </small>
+        </td>
+
+
         <td>
             <select class="form-select form-select-sm" onchange="actualizarEstadoMision('${id}', this.value)">
                 <option value="En curso" ${data.estado === "En curso" ? "selected" : ""}>En curso</option>
@@ -1115,6 +1127,11 @@ if (usuarioGuardado) {
     const mes = String(hoy.getMonth() + 1).padStart(2, '0');
     const anio = hoy.getFullYear();
     const fechaFormateada = `${dia}/${mes}/${anio}`;
+    const hora = hoy.toLocaleTimeString('es-PE', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true
+  });
 
     const misionData = {
       fecha: fechaFormateada,
@@ -1125,7 +1142,9 @@ if (usuarioGuardado) {
       piloto: datos.get("piloto"),
       dron: datos.get("dron"),
       tiempo: datos.get("tiempo"),
+      hora: hora,
       usuario: currentUser.username
+      
     };
     
     const missionId = await agregarMision(misionData);
